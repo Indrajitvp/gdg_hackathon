@@ -24,7 +24,9 @@ defmodule Gitmind.MixProject do
       {:plug_cowboy, "~> 2.6"}, # For the HTTP Webhook Server
       {:req, "~> 0.4.0"},       # For making API calls to Gemini/Telegram
       {:jason, "~> 1.4"},       # For parsing JSON
-      {:yamerl, "~> 0.10.0"}    # For reading/writing Markdown YAML frontmatter
+      {:ecto_sql, "~> 3.10"},   # Database wrapper
+      {:postgrex, "~> 0.17"},    # Postgres driver
+      {:websockex, "~> 0.4.3"}  # Discord Gateway WebSocket connection
     ]
   end
 end

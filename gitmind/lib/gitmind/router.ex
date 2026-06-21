@@ -1,32 +1,33 @@
 defmodule Gitmind.Router do
   use Plug.Router
+  import Ecto.Query
+
+  alias Gitmind.{Repo, Card, DiscordClient}
 
   plug :match
   plug Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason
   plug :dispatch
 
+  # Root endpoint: Serves as a keep-alive/health check to wake up the Render container
   get "/" do
-    send_resp(conn, 200, "GitMind API is running.")
+    send_resp(conn, 200, "GitMind Discord API is running.")
   end
 
-  # --------------------------------------------------------
-  # PERSON A (API Engineer) STARTING POINT
-  # --------------------------------------------------------
-  post "/api/telegram" do
-    # This is where Telegram will send messages.
-    # Person A will extract the text, send it to Gemini, and then pass the result to Person B's Git module.
-    IO.inspect(conn.body_params, label: "Incoming Telegram Webhook")
-    send_resp(conn, 200, "OK")
-  end
-
-  # --------------------------------------------------------
-  # PERSON B (Engine Engineer) STARTING POINT
-  # --------------------------------------------------------
+  # Daily/Hourly Cron trigger from Supabase pg_cron
   post "/api/internal/daily-cron" do
-    # This is where the Supabase Cron Job will ping every day.
-    # Person B will trigger the Git DB scan here to find due facts, and pass them to Person A's Telegram module to send out.
-    IO.puts("Cron Job Triggered!")
-    send_resp(conn, 200, "Cron Started")
+    now = DateTime.utc_now()
+
+    # Query all active due cards
+    query = from(c in Card, where: c.next_review_at <= ^now)
+    due_cards = Repo.all(query)
+
+    # Send each due card to its respective user via Discord DMs
+    Enum.each(due_cards, fn card ->
+      DiscordClient.send_review_card_to_user(card.user_id, card.id, card.fact)
+    end)
+
+    IO.puts("Triggered reviews for #{length(due_cards)} cards.")
+    send_resp(conn, 200, "Triggered reviews for #{length(due_cards)} cards.")
   end
 
   match _ do
