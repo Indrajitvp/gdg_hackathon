@@ -2,6 +2,12 @@
   <h1>🧠 Synapse</h1>
   <p><b>Zero-Friction Spaced Repetition built directly into Discord.</b></p>
   <p><i>A GDG Hackathon Submission</i></p>
+
+  <p>
+    <a href="https://discord.com/oauth2/authorize?client_id=1518276830723969127&permissions=274877959168&scope=bot"><b>🤖 Add Bot to Discord</b></a>
+    &nbsp;&nbsp;•&nbsp;&nbsp;
+    <a href="https://gdg-hackathon-6ixq.onrender.com/health"><b>🌐 View Backend Status (Render)</b></a>
+  </p>
 </div>
 
 ---
