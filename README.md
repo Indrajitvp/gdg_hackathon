@@ -1,13 +1,20 @@
 <div align="center">
   <h1>🧠 Synapse</h1>
-  <p><b>Zero-Friction Spaced Repetition built directly into Discord.</b></p>
+  <p><b>Zero-Friction Spaced Repetition built directly into Discord & WhatsApp.</b></p>
   <p><i>A GDG Hackathon Submission</i></p>
 
-  <p>
-    <a href="https://discord.com/oauth2/authorize?client_id=1518276830723969127&permissions=274877959168&scope=bot"><b>🤖 Add Bot to Discord</b></a>
-    &nbsp;&nbsp;•&nbsp;&nbsp;
-    <a href="https://gdg-hackathon-6ixq.onrender.com/health"><b>🌐 View Backend Status (Render)</b></a>
-  </p>
+  <br />
+
+  <table align="center">
+    <tr>
+      <td align="center"><h3><a href="https://discord.com/oauth2/authorize?client_id=1518276830723969127&permissions=274877959168&scope=bot">🤖 CLICK HERE TO ADD BOT TO DISCORD (LIVE PROD)</a></h3></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://gdg-hackathon-6ixq.onrender.com/health">🟢 View Production Backend Status (Render)</a></td>
+    </tr>
+  </table>
+
+  <br />
 </div>
 
 ---
@@ -64,13 +71,20 @@ cd gitmind
 
 ---
 
-## 🔮 Future Roadmap: The WhatsApp Integration
+## 🟢 WhatsApp Integration (Already Implemented)
 
-While our MVP was built for Discord to prove the spaced repetition algorithm and AI pipeline, our Elixir architecture was intentionally designed to be **frontend-agnostic**.
+While our live demo is running on Discord, our Elixir architecture was intentionally designed to be **frontend-agnostic**. The backend logic is already fully decoupled and supports the **WhatsApp Business Cloud API**. 
 
-Our immediate next step is to integrate the **WhatsApp Business Cloud API**. This will allow students to:
-1. Forward massive text chains directly to our WhatsApp number.
+To use the WhatsApp bot instead of Discord, you simply need to provide your Meta Developer keys in the `.env` file:
+
+```env
+WHATSAPP_TOKEN="your_meta_whatsapp_token"
+WHATSAPP_PHONE_NUMBER_ID="your_phone_id"
+```
+
+Once the keys are added, students can:
+1. Forward massive text chains directly to the Synapse WhatsApp number.
 2. Receive their daily flashcards via SMS push notifications.
 3. Grade their memory directly from their lock screen using Meta's interactive webhook buttons.
 
-Because the SuperMemo-2 algorithm and Ecto database are decoupled from the Discord Gateway, scaling this to WhatsApp simply requires plugging a new HTTP Webhook controller into our existing Elixir state machine.
+Because the SuperMemo-2 algorithm and Ecto database are decoupled from the gateway, the backend dynamically handles both platforms simultaneously.
