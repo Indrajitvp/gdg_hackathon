@@ -20,9 +20,17 @@ defmodule Gitmind.Router do
     |> send_resp(200, body)
   end
 
+  head "/health" do
+    send_resp(conn, 200, "")
+  end
+
   # Root fallback
   get "/" do
-    send_resp(conn, 200, "MemoDrop is running.")
+    send_resp(conn, 200, "Synapse is running.")
+  end
+
+  head "/" do
+    send_resp(conn, 200, "")
   end
 
   # Daily/Hourly Cron trigger from Supabase pg_cron
