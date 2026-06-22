@@ -229,6 +229,11 @@ defmodule Gitmind.DiscordGateway do
         {:error, :missing_api_key} ->
           DiscordClient.send_message(channel_id, "🔧 System error: Gemini API key is missing. Please contact administrator.")
 
+        {:error, reason} ->
+          require Logger
+          Logger.error("Failed to parse Gemini response: #{inspect(reason)}")
+          DiscordClient.send_message(channel_id, "⚠️ **Oops! I couldn't process that text.**\n\nThis usually happens if the text is too short, doesn't contain concrete facts, or triggered Google's safety filters. Try sending a different excerpt!")
+
         {:error, _reason} ->
           DiscordClient.send_message(channel_id, "Sorry, I had trouble parsing the text. Please try again.")
       end
