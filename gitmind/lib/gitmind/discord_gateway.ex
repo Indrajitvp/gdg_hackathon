@@ -115,7 +115,7 @@ defmodule Gitmind.DiscordGateway do
           "\n" <>
           "**Here's how to get started:**\n" <>
           "\n" <>
-          "1️⃣  **Paste** any notes, article, or chunk of text into this chat\n" <>
+          "1️⃣  **Paste** any notes, article, or chunk of text into this chat (must be >20 characters)\n" <>
           "2️⃣  **I'll extract** the key facts and create Q&A flashcards automatically\n" <>
           "3️⃣  **Review** your cards — I'll show the question first, then the answer\n" <>
           "4️⃣  **Grade yourself** honestly — I'll schedule your next review smartly!\n" <>
@@ -348,7 +348,7 @@ defmodule Gitmind.DiscordGateway do
     case callback_data do
       "menu:create" ->
         DiscordClient.defer_interaction(interaction_id, interaction_token)
-        DiscordClient.send_message(channel_id, "**How to create cards:**\n━━━━━━━━━━━━━━━━━━━━\nJust paste your text directly into this chat! If it's a long text block, I'll extract the core facts and turn them into flashcards automatically.")
+        DiscordClient.send_message(channel_id, "**How to create cards:**\n━━━━━━━━━━━━━━━━━━━━\nJust paste your text directly into this chat! The text must be at least **20 characters long** so I have enough context. I'll extract the core facts and turn them into flashcards automatically.")
 
       "menu:review" ->
         import Ecto.Query
