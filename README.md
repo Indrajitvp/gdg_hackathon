@@ -71,7 +71,7 @@ cd gitmind
 
 ---
 
-## 🟢 WhatsApp Integration (Already Implemented)
+## 🟢 WhatsApp Integration
 
 While our live demo is running on Discord, our Elixir architecture was intentionally designed to be **frontend-agnostic**. The backend logic is already fully decoupled and supports the **WhatsApp Business Cloud API**. 
 
