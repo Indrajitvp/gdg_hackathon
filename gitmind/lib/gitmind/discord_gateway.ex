@@ -131,7 +131,7 @@ defmodule Gitmind.DiscordGateway do
           {count, _} = Repo.delete_all(from(c in Card, where: c.user_id == ^user_id))
           DiscordClient.send_message(channel_id, "🗑️ **Database Wiped!**\nDeleted **#{count}** flashcards. You are starting fresh!")
           
-        text && String.length(text) > 100 ->
+        text && String.length(text) > 20 ->
           handle_ingestion(user_id, channel_id, text)
           
         true ->
