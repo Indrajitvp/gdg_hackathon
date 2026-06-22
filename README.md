@@ -64,5 +64,13 @@ cd gitmind
 
 ---
 
-## 🔮 Future Roadmap
-While we built this for Discord, the architecture is designed to easily swap out the frontend Gateway. Our next immediate step is to integrate the **WhatsApp Business Cloud API**, allowing students to review their flashcards directly from their SMS text messages using Meta's interactive webhook buttons.
+## 🔮 Future Roadmap: The WhatsApp Integration
+
+While our MVP was built for Discord to prove the spaced repetition algorithm and AI pipeline, our Elixir architecture was intentionally designed to be **frontend-agnostic**.
+
+Our immediate next step is to integrate the **WhatsApp Business Cloud API**. This will allow students to:
+1. Forward massive text chains directly to our WhatsApp number.
+2. Receive their daily flashcards via SMS push notifications.
+3. Grade their memory directly from their lock screen using Meta's interactive webhook buttons.
+
+Because the SuperMemo-2 algorithm and Ecto database are decoupled from the Discord Gateway, scaling this to WhatsApp simply requires plugging a new HTTP Webhook controller into our existing Elixir state machine.
