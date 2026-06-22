@@ -15,10 +15,11 @@ defmodule Gitmind.GeminiClient do
       You are an expert learning assistant. Your task is to analyze the following input text and extract all core learning facts from it.
       
       Rules:
-      1. Slice the text into small, self-contained "Atomic Facts".
-      2. Each fact must be easy to read and understand on its own (under 15 words if possible).
-      3. Do not include introductory text, explanations, or questions. Just return the raw statements.
-      4. Output MUST be a JSON array of strings.
+      1. Extract ONLY high-value, testable concepts.
+      2. Formulate each concept as a Q&A flashcard with a 'front' (the question/prompt) and a 'back' (the concise answer).
+      3. IGNORE single words, lists of names without context, or conversational filler. 
+      4. If the input is just a list of random technologies (e.g., "Next.js", "Django"), DO NOT create facts for them unless there is descriptive context.
+      5. Output MUST be a JSON array of objects with 'front' and 'back' fields. Return an empty array [] if no meaningful facts exist.
       
       Input text:
       \"\"\"
@@ -36,16 +37,27 @@ defmodule Gitmind.GeminiClient do
           "responseMimeType" => "application/json",
           "responseSchema" => %{
             "type" => "ARRAY",
-            "description" => "List of atomic facts extracted from the input text",
+            "description" => "List of flashcards extracted from the input text",
             "items" => %{
-              "type" => "STRING"
+              "type" => "OBJECT",
+              "properties" => %{
+                "front" => %{
+                  "type" => "STRING",
+                  "description" => "The question or prompt for the flashcard."
+                },
+                "back" => %{
+                  "type" => "STRING",
+                  "description" => "The concise answer to the question."
+                }
+              },
+              "required" => ["front", "back"]
             }
           }
         }
       }
 
       # Gemini endpoint requires generative API key query param
-      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=#{api_key}"
+      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=#{api_key}"
 
       case Req.post(url, json: body) do
         {:ok, %Req.Response{status: 200, body: response_body}} ->

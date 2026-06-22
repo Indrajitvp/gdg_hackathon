@@ -13,11 +13,13 @@ defmodule Gitmind.Repo do
     config =
       config
       |> Keyword.put(:url, url)
-      |> Keyword.put(:pool_size, String.to_integer(System.get_env("POOL_SIZE") || "10"))
+      |> Keyword.put(:pool_size, String.to_integer(System.get_env("POOL_SIZE") || "3"))
 
     config =
       if ssl? do
-        Keyword.put(config, :ssl, [verify: :verify_none])
+        config
+        |> Keyword.put(:ssl, true)
+        |> Keyword.put(:ssl_opts, [verify: :verify_none])
       else
         config
       end

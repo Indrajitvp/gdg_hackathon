@@ -19,10 +19,10 @@ defmodule Gitmind.DiscordClient do
   @doc """
   Sends a review card (fact with inline buttons) to a user via DM.
   """
-  def send_review_card_to_user(user_id, card_id, fact) do
+  def send_review_card_to_user(user_id, card_id, front) do
     case create_dm_channel(user_id) do
       {:ok, channel_id} ->
-        send_review_card(channel_id, card_id, fact)
+        send_review_card(channel_id, card_id, front)
       {:error, reason} ->
         {:error, reason}
     end
@@ -59,37 +59,108 @@ defmodule Gitmind.DiscordClient do
   end
 
   @doc """
-  Sends a review card with buttons (Forgot, Hard, Easy) to a channel.
+  Sends the Main Menu to a channel.
   """
-  def send_review_card(channel_id, card_id, fact) do
+  def send_main_menu(channel_id) do
     url = "#{@base_url}/channels/#{channel_id}/messages"
     body = %{
-      "content" => "🧠 **Review Fact:**\n\n#{fact}",
+      "content" => "👋 **Welcome to Synapse!**\n\nWhat would you like to do today?",
       "components" => [
         %{
-          "type" => 1, # Action Row
+          "type" => 1,
           "components" => [
             %{
-              "type" => 2, # Button
-              "style" => 4, # Red (Danger)
-              "label" => "Forgot",
-              "custom_id" => "review:forgot:#{card_id}"
+              "type" => 2,
+              "style" => 1, # Primary (Blurple)
+              "label" => "➕ Create Cards",
+              "custom_id" => "menu:create"
             },
             %{
-              "type" => 2, # Button
-              "style" => 2, # Grey (Secondary)
-              "label" => "Hard",
-              "custom_id" => "review:hard:#{card_id}"
+              "type" => 2,
+              "style" => 3, # Success (Green)
+              "label" => "🧠 Start Review",
+              "custom_id" => "menu:review"
             },
             %{
-              "type" => 2, # Button
-              "style" => 3, # Green (Success)
-              "label" => "Easy",
-              "custom_id" => "review:easy:#{card_id}"
+              "type" => 2,
+              "style" => 2, # Secondary (Grey)
+              "label" => "📊 My Stats",
+              "custom_id" => "menu:stats"
             }
           ]
         }
       ]
+    }
+
+    case request(:post, url, body) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Sends the front of a review card with a 'Show Answer' button to a channel.
+  """
+  def send_review_card(channel_id, card_id, front) do
+    url = "#{@base_url}/channels/#{channel_id}/messages"
+    body = %{
+      "content" => "📚 **Review Fact**\n━━━━━━━━━━━━━━━━━━━━\n\n**Q:** *#{front}*\n\n━━━━━━━━━━━━━━━━━━━━",
+      "components" => [
+        %{
+          "type" => 1,
+          "components" => [
+            %{
+              "type" => 2,
+              "style" => 1, # Primary (Blurple)
+              "label" => "👁️ Show Answer",
+              "custom_id" => "flip:#{card_id}"
+            }
+          ]
+        }
+      ]
+    }
+
+    case request(:post, url, body) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Reveals the back of the flashcard by editing the interaction message, and attaches the grading buttons.
+  """
+  def flip_card_to_back(interaction_id, interaction_token, front, back, card_id) do
+    url = "#{@base_url}/interactions/#{interaction_id}/#{interaction_token}/callback"
+    body = %{
+      "type" => 7, # UPDATE_MESSAGE
+      "data" => %{
+        "content" => "📚 **Review Fact**\n━━━━━━━━━━━━━━━━━━━━\n\n**Q:** *#{front}*\n\n**A:** *#{back}*\n\n━━━━━━━━━━━━━━━━━━━━",
+        "components" => [
+          %{
+            "type" => 1, # Action Row
+            "components" => [
+              %{
+                "type" => 2, # Button
+                "style" => 4, # Red (Danger)
+                "label" => "🔴 Forgot",
+                "custom_id" => "review:forgot:#{card_id}"
+              },
+              %{
+                "type" => 2, # Button
+                "style" => 2, # Grey (Secondary)
+                "label" => "🟡 Hard",
+                "custom_id" => "review:hard:#{card_id}"
+              },
+              %{
+                "type" => 2, # Button
+                "style" => 3, # Green (Success)
+                "label" => "🟢 Easy",
+                "custom_id" => "review:easy:#{card_id}"
+              }
+            ]
+          }
+        ]
+      }
     }
 
     case request(:post, url, body) do
@@ -107,7 +178,79 @@ defmodule Gitmind.DiscordClient do
       "type" => 7, # UPDATE_MESSAGE
       "data" => %{
         "content" => "#{original_text}\n\n#{feedback_text}",
-        "components" => [] # Empty components array deletes all buttons
+        "components" => [] # Empty components array deletes all grading buttons
+      }
+    }
+
+    case request(:post, url, body) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Responds to an interaction with a brand new review card (leaves the original message alone).
+  """
+  def reply_to_interaction_with_card(interaction_id, interaction_token, card_id, front) do
+    url = "#{@base_url}/interactions/#{interaction_id}/#{interaction_token}/callback"
+    body = %{
+      "type" => 4, # CHANNEL_MESSAGE_WITH_SOURCE
+      "data" => %{
+        "content" => "📚 **Review Fact**\n━━━━━━━━━━━━━━━━━━━━\n\n**Q:** *#{front}*\n\n━━━━━━━━━━━━━━━━━━━━",
+        "components" => [
+          %{
+            "type" => 1,
+            "components" => [
+              %{
+                "type" => 2,
+                "style" => 1, # Primary (Blurple)
+                "label" => "👁️ Show Answer",
+                "custom_id" => "flip:#{card_id}"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+    case request(:post, url, body) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Acknowledges an interaction silently (removes loading state) without sending anything.
+  """
+  def defer_interaction(interaction_id, interaction_token) do
+    url = "#{@base_url}/interactions/#{interaction_id}/#{interaction_token}/callback"
+    body = %{"type" => 6} # DEFERRED_UPDATE_MESSAGE
+
+    request(:post, url, body)
+  end
+
+  @doc """
+  Responds to an interaction to edit the original message, clear old buttons, and add a 'Next Card' button.
+  """
+  def respond_with_next_button(interaction_id, interaction_token, original_text, feedback_text) do
+    url = "#{@base_url}/interactions/#{interaction_id}/#{interaction_token}/callback"
+    body = %{
+      "type" => 7, # UPDATE_MESSAGE
+      "data" => %{
+        "content" => "#{original_text}\n\n#{feedback_text}",
+        "components" => [
+          %{
+            "type" => 1,
+            "components" => [
+              %{
+                "type" => 2,
+                "style" => 1,
+                "label" => "➡️ Next Card",
+                "custom_id" => "menu:review"
+              }
+            ]
+          }
+        ]
       }
     }
 

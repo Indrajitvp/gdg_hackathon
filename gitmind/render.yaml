@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: gitmind-discord-bot
+    env: elixir
+    # The build command installs package managers, fetches dependencies, and compiles the app
+    buildCommand: mix local.hex --force && mix local.rebar --force && mix deps.get && mix compile
+    # The start command runs database migrations and then boots the Discord bot
+    startCommand: mix ecto.migrate && mix run --no-halt
+    envVars:
+      - key: MIX_ENV
+        value: prod
+      - key: PORT
+        value: 4000
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

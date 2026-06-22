@@ -22,10 +22,11 @@ defmodule Gitmind.MixProject do
     [
       # The dependencies we discussed in the plan
       {:plug_cowboy, "~> 2.6"}, # For the HTTP Webhook Server
+      {:finch, "~> 0.16.0"},    # Pinned for Elixir 1.14
       {:req, "~> 0.4.0"},       # For making API calls to Gemini/Telegram
       {:jason, "~> 1.4"},       # For parsing JSON
       {:ecto_sql, "~> 3.10"},   # Database wrapper
-      {:postgrex, "~> 0.17"},    # Postgres driver
+      {:postgrex, "0.17.5"},    # Postgres driver (pinned for Elixir 1.14)
       {:websockex, "~> 0.4.3"}  # Discord Gateway WebSocket connection
     ]
   end

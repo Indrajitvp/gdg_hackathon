@@ -8,9 +8,21 @@ defmodule Gitmind.Router do
   plug Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason
   plug :dispatch
 
-  # Root endpoint: Serves as a keep-alive/health check to wake up the Render container
+  # Health check endpoint — monitored by UptimeRobot to keep Render container alive
+  get "/health" do
+    body = Jason.encode!(%{
+      status: "ok",
+      service: "Synapse Discord Bot",
+      timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+    })
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, body)
+  end
+
+  # Root fallback
   get "/" do
-    send_resp(conn, 200, "GitMind Discord API is running.")
+    send_resp(conn, 200, "MemoDrop is running.")
   end
 
   # Daily/Hourly Cron trigger from Supabase pg_cron
@@ -33,7 +45,7 @@ defmodule Gitmind.Router do
         due_cards
         |> Task.async_stream(
           fn card ->
-            DiscordClient.send_review_card_to_user(card.user_id, card.id, card.fact)
+            DiscordClient.send_review_card_to_user(card.user_id, card.id, card.front)
           end,
           max_concurrency: 5,
           on_timeout: :kill_task

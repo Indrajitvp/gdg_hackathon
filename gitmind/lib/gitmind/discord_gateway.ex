@@ -33,8 +33,8 @@ defmodule Gitmind.DiscordGateway do
   end
 
   @impl true
-  def handle_disconnect(_conn, state) do
-    Logger.warning("Disconnected from Discord Gateway. Attempting reconnect...")
+  def handle_disconnect(conn_status, state) do
+    Logger.warning("Disconnected from Discord Gateway. Reason: #{inspect(conn_status)}")
     
     if state.heartbeat_timer do
       Process.cancel_timer(state.heartbeat_timer)
@@ -67,7 +67,7 @@ defmodule Gitmind.DiscordGateway do
     identify_payload = %{
       "op" => 2,
       "d" => %{
-        "token" => "Bot #{state.token}",
+        "token" => state.token,
         # Intents: Guild Messages (512) + Direct Messages (4096) + Message Content (32768) = 37376
         "intents" => 37376,
         "properties" => %{
@@ -78,13 +78,8 @@ defmodule Gitmind.DiscordGateway do
       }
     }
 
-    case WebSockex.send_frame(self(), {:text, Jason.encode!(identify_payload)}) do
-      :ok ->
-        {:ok, %{state | heartbeat_interval: interval, heartbeat_timer: timer}}
-      error ->
-        Logger.error("Failed to send identify payload: #{inspect(error)}")
-        {:ok, state}
-      end
+    new_state = %{state | heartbeat_interval: interval, heartbeat_timer: timer}
+    {:reply, {:text, Jason.encode!(identify_payload)}, new_state}
   end
 
   # OP 0: Dispatch (Standard Discord Events)
@@ -98,16 +93,56 @@ defmodule Gitmind.DiscordGateway do
     {:ok, state}
   end
 
-  # Trigger fact ingestion on user text message
+  # Trigger fact ingestion on user text message or show menu
   defp handle_payload(0, "MESSAGE_CREATE", %{"channel_id" => channel_id, "content" => text, "author" => %{"id" => author_id}}, state) do
     Task.start(fn ->
-      handle_ingestion(author_id, channel_id, text)
+      user_id = String.to_integer(author_id)
+      
+      is_new_user = case Repo.get(User, user_id) do
+        nil ->
+          %User{} |> User.changeset(%{id: user_id}) |> Repo.insert()
+          true
+        _ ->
+          false
+      end
+
+      if is_new_user do
+        welcome =
+          "🧠 **Hey there! I'm Synapse — your AI flashcard study buddy.**\n" <>
+          "━━━━━━━━━━━━━━━━━━━━\n" <>
+          "\n" <>
+          "I turn your notes, articles, and study material into smart flashcards — and help you actually remember them using **Spaced Repetition**.\n" <>
+          "\n" <>
+          "**Here's how to get started:**\n" <>
+          "\n" <>
+          "1️⃣  **Paste** any notes, article, or chunk of text into this chat\n" <>
+          "2️⃣  **I'll extract** the key facts and create Q&A flashcards automatically\n" <>
+          "3️⃣  **Review** your cards — I'll show the question first, then the answer\n" <>
+          "4️⃣  **Grade yourself** honestly — I'll schedule your next review smartly!\n" <>
+          "\n" <>
+          "💡 *The more you review, the smarter the scheduling gets!*\n" <>
+          "━━━━━━━━━━━━━━━━━━━━"
+        DiscordClient.send_message(channel_id, welcome)
+      end
+
+      cond do
+        text == "!wipe" ->
+          import Ecto.Query
+          {count, _} = Repo.delete_all(from(c in Card, where: c.user_id == ^user_id))
+          DiscordClient.send_message(channel_id, "🗑️ **Database Wiped!**\nDeleted **#{count}** flashcards. You are starting fresh!")
+          
+        text && String.length(text) > 100 ->
+          handle_ingestion(user_id, channel_id, text)
+          
+        true ->
+          DiscordClient.send_main_menu(channel_id)
+      end
     end)
 
     {:ok, state}
   end
 
-  # Trigger local SM-2 calculation on user button interaction
+  # Trigger interaction handles
   defp handle_payload(0, "INTERACTION_CREATE", %{
          "id" => interaction_id,
          "token" => token,
@@ -123,9 +158,18 @@ defmodule Gitmind.DiscordGateway do
         _ -> nil
       end
 
+    channel_id = Map.get(data, "channel_id")
+
     Task.start(fn ->
       if user_id do
-        handle_button_click(interaction_id, token, message, callback_data, user_id)
+        cond do
+          String.starts_with?(callback_data, "menu:") ->
+            handle_menu_interaction(interaction_id, token, channel_id, callback_data, user_id)
+          String.starts_with?(callback_data, "flip:") ->
+            handle_flip_interaction(interaction_id, token, callback_data, user_id)
+          true ->
+            handle_button_click(interaction_id, token, message, callback_data, user_id)
+        end
       end
     end)
 
@@ -151,42 +195,36 @@ defmodule Gitmind.DiscordGateway do
       "d" => state.sequence
     }
 
-    case WebSockex.send_frame(self(), {:text, Jason.encode!(heartbeat_payload)}) do
-      :ok ->
-        timer = schedule_heartbeat(state.heartbeat_interval)
-        {:ok, %{state | heartbeat_timer: timer}}
-      error ->
-        Logger.error("Failed to send heartbeat: #{inspect(error)}")
-        {:close, {1006, "Heartbeat failure"}, state}
-    end
+    timer = schedule_heartbeat(state.heartbeat_interval)
+    new_state = %{state | heartbeat_timer: timer}
+    {:reply, {:text, Jason.encode!(heartbeat_payload)}, new_state}
   end
 
   # Handles text ingestion
-  defp handle_ingestion(user_id_str, channel_id, text) do
-    user_id = String.to_integer(user_id_str)
-    
+  defp handle_ingestion(user_id, channel_id, text) do
     if text && text != "" do
-      ensure_user_exists(user_id)
 
       case GeminiClient.slice_text(text) do
         {:ok, facts} when is_list(facts) and length(facts) > 0 ->
           now = DateTime.utc_now() |> DateTime.truncate(:second)
           next_review = DateTime.add(now, 1, :day)
 
-          Enum.each(facts, fn fact ->
+          Enum.each(facts, fn %{"front" => front, "back" => back} ->
             %Card{}
             |> Card.changeset(%{
               user_id: user_id,
-              fact: fact,
+              front: front,
+              back: back,
               next_review_at: next_review
             })
             |> Repo.insert()
           end)
 
-          DiscordClient.send_message(channel_id, "🧠 Ingested #{length(facts)} atomic facts! Daily reviews will start tomorrow in your DMs.")
+          DiscordClient.send_message(channel_id, "✅ **Successfully Ingested!**\n━━━━━━━━━━━━━━━━━━━━\nExtracted **#{length(facts)}** high-quality flashcards from your text.\nThey have been added to your queue!")
+          DiscordClient.send_main_menu(channel_id)
 
         {:ok, _} ->
-          DiscordClient.send_message(channel_id, "Could not extract any learning facts from that input. Please try sending a more factual text.")
+          DiscordClient.send_message(channel_id, "❌ **Could not extract facts.**\nPlease try sending a more factual text or complete sentences.")
 
         {:error, :missing_api_key} ->
           DiscordClient.send_message(channel_id, "🔧 System error: Gemini API key is missing. Please contact administrator.")
@@ -194,6 +232,31 @@ defmodule Gitmind.DiscordGateway do
         {:error, _reason} ->
           DiscordClient.send_message(channel_id, "Sorry, I had trouble parsing the text. Please try again.")
       end
+    end
+  end
+
+  # Handles card flip interaction
+  defp handle_flip_interaction(interaction_id, interaction_token, callback_data, user_id_str) do
+    user_id = String.to_integer(user_id_str)
+
+    case String.split(callback_data, ":") do
+      ["flip", card_id] ->
+        card = Repo.get(Card, card_id)
+
+        cond do
+          is_nil(card) -> :ok
+          card.user_id != user_id -> :ok
+          true ->
+            DiscordClient.flip_card_to_back(
+              interaction_id,
+              interaction_token,
+              card.front,
+              card.back,
+              card.id
+            )
+        end
+      _ ->
+        :ok
     end
   end
 
@@ -240,9 +303,78 @@ defmodule Gitmind.DiscordGateway do
               interaction_id,
               interaction_token,
               original_text,
-              "✅ Response recorded:\n*#{feedback_display}*"
+              "✅ Response recorded: *#{feedback_display}*"
             )
+
+            # Auto-fetch next card for frictionless loop
+            import Ecto.Query
+            now = DateTime.utc_now()
+            next_query = from(c in Card, where: c.user_id == ^user_id and c.next_review_at <= ^now, limit: 1)
+            
+            # Since the current interaction has the channel ID in the event message, we can get it
+            channel_id = message["channel_id"]
+
+            next_cards = Repo.all(next_query)
+            
+            next_cards = if length(next_cards) == 0 do
+              # Fallback for Hackathon: Just grab a random active card if none are strictly due!
+              Repo.all(from(c in Card, where: c.user_id == ^user_id and c.id != ^card.id, order_by: fragment("RANDOM()"), limit: 1))
+            else
+              next_cards
+            end
+
+            case next_cards do
+              [next_card] ->
+                DiscordClient.send_review_card(channel_id, next_card.id, next_card.front)
+              [] ->
+                DiscordClient.send_message(channel_id, "🎉 **You're all caught up!** No more flashcards due for review right now.")
+            end
         end
+
+      _ ->
+        :ok
+    end
+  end
+
+  # Handles main menu buttons
+  defp handle_menu_interaction(interaction_id, interaction_token, channel_id, callback_data, user_id_str) do
+    user_id = String.to_integer(user_id_str)
+
+    case callback_data do
+      "menu:create" ->
+        DiscordClient.defer_interaction(interaction_id, interaction_token)
+        DiscordClient.send_message(channel_id, "**How to create cards:**\n━━━━━━━━━━━━━━━━━━━━\nJust paste your text directly into this chat! If it's a long text block, I'll extract the core facts and turn them into flashcards automatically.")
+
+      "menu:review" ->
+        import Ecto.Query
+        now = DateTime.utc_now()
+        
+        query = from(c in Card, where: c.user_id == ^user_id and c.next_review_at <= ^now, limit: 1)
+        cards = Repo.all(query)
+        
+        cards = if length(cards) == 0 do
+          fallback_query = from(c in Card, where: c.user_id == ^user_id, order_by: fragment("RANDOM()"), limit: 1)
+          Repo.all(fallback_query)
+        else
+          cards
+        end
+
+        if length(cards) > 0 do
+          card = hd(cards)
+          
+          # Reply with the card, leaving the menu intact!
+          DiscordClient.reply_to_interaction_with_card(interaction_id, interaction_token, card.id, card.front)
+        else
+          DiscordClient.defer_interaction(interaction_id, interaction_token)
+          DiscordClient.send_message(channel_id, "❌ You don't have any flashcards yet! Drop some text to get started.")
+        end
+
+      "menu:stats" ->
+        import Ecto.Query
+        count = Repo.aggregate(from(c in Card, where: c.user_id == ^user_id), :count, :id)
+        
+        DiscordClient.defer_interaction(interaction_id, interaction_token)
+        DiscordClient.send_message(channel_id, "📊 **Your Stats**\n━━━━━━━━━━━━━━━━━━━━\nYou have **#{count}** active flashcards in your database!")
 
       _ ->
         :ok
@@ -252,16 +384,5 @@ defmodule Gitmind.DiscordGateway do
   defp schedule_heartbeat(nil), do: nil
   defp schedule_heartbeat(interval) do
     Process.send_after(self(), :heartbeat, interval)
-  end
-
-  defp ensure_user_exists(user_id) do
-    case Repo.get(User, user_id) do
-      nil ->
-        %User{}
-        |> User.changeset(%{id: user_id})
-        |> Repo.insert()
-      _user ->
-        :ok
-    end
   end
 end

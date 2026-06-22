@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitMind | Architecture & Plan</title>
+    <title>GitMind | Technical Architecture</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,10 +11,10 @@
             --card-bg: rgba(30, 41, 59, 0.7);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-1: #3b82f6; /* Blue */
-            --accent-2: #8b5cf6; /* Purple */
-            --accent-3: #10b981; /* Green */
-            --accent-4: #f43f5e; /* Red */
+            --accent-1: #5865F2; /* Discord Blurple */
+            --accent-2: #10b981; /* Postgres Green */
+            --accent-3: #8b5cf6; /* Elixir Purple */
+            --accent-4: #f43f5e; /* Gemini Red */
             --code-bg: #020617;
         }
 
@@ -27,7 +27,7 @@
             line-height: 1.6;
             padding: 2rem;
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.1), transparent 25%),
+                radial-gradient(circle at 15% 50%, rgba(88, 101, 242, 0.1), transparent 25%),
                 radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1), transparent 25%);
             background-attachment: fixed;
         }
@@ -39,7 +39,7 @@
             font-size: 3.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            background: linear-gradient(135deg, #5865F2, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -67,34 +67,18 @@
 
         h3 { font-size: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; color: var(--text-main); }
         
-        /* Typography for text */
         .body-text { color: #cbd5e1; font-size: 1.05rem; margin-bottom: 1.5rem; }
-        .highlight { color: var(--accent-1); font-weight: 600; }
+        .highlight { font-weight: 600; }
         
-        /* Workflow Steps */
         .step { display: flex; align-items: flex-start; margin-bottom: 1.5rem; }
         .step-number {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
             color: white; font-weight: 800; width: 40px; height: 40px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            margin-right: 1rem; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            margin-right: 1rem; box-shadow: 0 0 15px rgba(88, 101, 242, 0.5);
         }
 
-        /* Code Blocks */
-        pre {
-            background-color: var(--code-bg);
-            padding: 1.5rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 1.5rem;
-        }
-        code { font-family: 'Fira Code', monospace; font-size: 0.9rem; color: #a5b4fc; }
-
-        /* Grids */
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .role-a { border-top: 4px solid var(--accent-4); }
-        .role-b { border-top: 4px solid var(--accent-3); }
 
         @media (max-width: 768px) {
             .grid-2 { grid-template-columns: 1fr; }
@@ -107,159 +91,97 @@
     <div class="container">
         
         <header>
-            <h1>GitMind</h1>
-            <p class="subtitle">A complete technical breakdown: From the basic problem we are solving, to the deep engineering nuances of executing an obscure tech stack.</p>
+            <h1>GitMind (Discord Edition)</h1>
+            <p class="subtitle">A zero-friction, highly scalable spaced repetition memory engine built directly into Discord.</p>
         </header>
 
-        <!-- ==========================================
-             SECTION 1: THE BASICS
-             ========================================== -->
+        <!-- SECTION 1: THE BASICS -->
         <section>
-            <h2>1. The Problem & Our Solution</h2>
+            <h2>1. The Core Concept</h2>
             <div class="glass-card">
-                <p class="body-text"><strong>The Problem:</strong> Scientific studies show that students forget 70% of what they study within a single week. Spaced repetition systems (like Anki) mathematically solve this problem, but they have a fatal flaw: <span class="highlight">The setup friction is too high.</span> Nobody wants to manually create hundreds of flashcard decks.</p>
-                <p class="body-text" style="margin-bottom: 0;"><strong>The GitMind Solution:</strong> We are building a "zero-friction" memory engine. You do not download an app. You do not create an account. You simply forward text or send voice notes to a Telegram bot. Our AI slices it into facts, and an obscure backend (using a Git repository as a database) mathematically calculates when you are about to forget it, and pings you.</p>
+                <p class="body-text"><strong>The Problem:</strong> Students forget 70% of what they learn within days. Mathematical "Spaced Repetition" systems (like Anki) fix this, but they require massive manual effort to create flashcards. The friction is too high.</p>
+                <p class="body-text" style="margin-bottom: 0;"><strong>Our Solution:</strong> Zero friction. The user pastes a wall of text into a Discord channel. Our AI automatically extracts the "Atomic Facts", saves them to a database, and the Discord bot pings the user exactly on the day they are mathematically predicted to forget it.</p>
             </div>
         </section>
 
-        <!-- ==========================================
-             SECTION 2: THE USER JOURNEY
-             ========================================== -->
+        <!-- SECTION 2: THE USER JOURNEY -->
         <section>
-            <h2>2. How It Works (The User Journey)</h2>
+            <h2>2. The User Journey</h2>
             <div class="grid-2">
                 <div class="glass-card">
-                    <h3 style="color: var(--accent-1);">Phase 1: Ingestion</h3>
+                    <h3 style="color: var(--accent-1);">Phase 1: Knowledge Ingestion</h3>
                     <div class="step">
                         <div class="step-number">1</div>
                         <div>
-                            <strong>User Sends a Message</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">A user forwards a long text from an article or sends a voice note to the Telegram Bot.</p>
+                            <strong>Dump Data in Discord</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">The user pastes an article or sends a message directly to the Discord Bot.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">2</div>
                         <div>
-                            <strong>Gemini AI Slices It</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">The backend sends the raw data to Gemini, which automatically chunks it into bite-sized "Atomic Facts".</p>
+                            <strong>AI Fact Extraction</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">The Elixir backend routes the text to the Google Gemini AI, forcing it to return a JSON array of "Atomic Facts".</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">3</div>
                         <div>
-                            <strong>Saved to Git DB</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">Each fact is saved as a Markdown file and `git commit`ted to the backend database.</p>
+                            <strong>Database Storage</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">Each fact is saved to Supabase PostgreSQL with a default `next_review_at` timestamp.</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="glass-card">
-                    <h3 style="color: var(--accent-2);">Phase 2: Daily Review</h3>
+                    <h3 style="color: var(--accent-3);">Phase 2: Mathematical Review</h3>
                     <div class="step">
                         <div class="step-number">4</div>
                         <div>
-                            <strong>Daily Cron Job</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">Every morning, the system scans the Git repo for any facts the user is mathematically predicted to forget today.</p>
+                            <strong>Daily Ping</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">The bot DMs the user facts they are scheduled to forget today, featuring interactive buttons: [Forgot], [Hard], [Easy].</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">5</div>
                         <div>
-                            <strong>1-Click Review</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">The bot sends the fact to the user via Telegram with 3 simple buttons attached: [Forgot], [Hard], [Easy].</p>
+                            <strong>Local SM-2 Math</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">When a button is clicked, our Elixir SuperMemo-2 engine locally calculates the exact new review date.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">6</div>
                         <div>
-                            <strong>AI Recalculates</strong>
-                            <p class="text-muted" style="font-size: 0.95rem;">The user clicks a button. Gemini calculates the new review date. A new Git commit is made.</p>
+                            <strong>Instant Update</strong>
+                            <p class="text-muted" style="font-size: 0.95rem;">The database is updated in milliseconds, and the Discord message transforms to confirm the new interval.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ==========================================
-             SECTION 3: TECHNICAL NUANCES
-             ========================================== -->
+        <!-- SECTION 3: TECHNICAL STACK -->
         <section>
-            <h2>3. Deep Technical Implementation (Under The Hood)</h2>
-            <p class="body-text">Now that the basics are clear, here is the deeply technical, no-bullshit breakdown of how we execute the "Git as a Database" architecture using Elixir, Supabase, and Gemini.</p>
+            <h2>3. The Tech Stack (Under The Hood)</h2>
             
-            <!-- TECH CARD 1: Git DB -->
             <div class="glass-card">
-                <h3 style="color: var(--accent-1);">Nuance 1: The "Git as a Database" Schema</h3>
-                <p class="body-text">We are not using PostgreSQL. The "database" is literally a <span class="highlight">bare git repository</span>. But a database needs tables and indexed columns to query data. How do we do that in Git?</p>
-                <p class="body-text"><strong>The Solution (Markdown + YAML Frontmatter):</strong> Each "Atomic Fact" is stored as an independent Markdown file. The YAML Frontmatter at the top of the file acts as our SQL columns (ID, next review date, difficulty multiplier). The Markdown body is the content.</p>
-<pre><code>---
-id: "550e8400-e29b-41d4-a716-446655440000"
-next_review_epoch: 1718841600
-ease_factor: 2.5
----
-Mitochondria is the powerhouse of the cell.
-</code></pre>
-                <p class="body-text" style="margin-bottom:0;">To find facts due for review today, Elixir doesn't write SQL. Instead, it reads the Git Tree, parses the YAML of every file in memory (which is blazing fast in Erlang), and filters for `next_review_epoch <= current_epoch`.</p>
+                <h3 style="color: var(--accent-3);">Backend: Elixir & Erlang VM</h3>
+                <p class="body-text">We chose Elixir for its incredible concurrency. By using the `WebSockex` library, our server maintains a continuous, persistent WebSocket connection directly to the Discord Gateway. This means we process incoming messages in real-time without polling or relying on HTTP webhooks.</p>
             </div>
 
-            <!-- TECH CARD 2: Concurrency -->
             <div class="glass-card">
-                <h3 style="color: var(--accent-2);">Nuance 2: Solving Git Concurrency (The GenServer Funnel)</h3>
-                <p class="body-text"><strong>The Fatal Flaw:</strong> Git is fundamentally <span class="highlight">not scalable</span>. If 100 users forward a voice note to the Telegram bot at the exact same millisecond, Elixir will attempt to execute 100 simultaneous `git commit` operations. Git uses a locking mechanism (`.git/index.lock`). 99 of those requests will instantly crash with a lock error.</p>
-                <p class="body-text" style="margin-bottom:0;"><strong>The Elixir Solution (Actor Model):</strong> We use Elixir's superpower: the `GenServer`. We create a single, dedicated background process called `GitManager`. When 100 webhook HTTP requests hit the server, they instantly pass their data to `GitManager` and return a `200 OK` to Telegram (so the bot feels lightning fast). The `GitManager` then processes those 100 git commits <span class="highlight">strictly sequentially</span>, one after the other. No locks, no race conditions, perfect safety.</p>
+                <h3 style="color: var(--accent-2);">Database: Supabase (PostgreSQL)</h3>
+                <p class="body-text">We use the `Ecto` wrapper in Elixir to safely interact with a Supabase Postgres database. We maintain strict schemas for `Users` and their `Cards` (facts), ensuring we can effortlessly query millions of rows to find cards due for review on any given day.</p>
             </div>
 
-            <!-- TECH CARD 3: Ephemeral Storage -->
             <div class="glass-card">
-                <h3 style="color: var(--accent-4);">Nuance 3: The Ephemeral Storage Nightmare (Stateless Hosting)</h3>
-                <p class="body-text"><strong>The Fatal Flaw:</strong> We are hosting this on a free platform (Render.com). These container platforms are <span class="highlight">stateless</span>. If the container restarts or goes to sleep, the local filesystem is permanently wiped. This means our entire local Git Database is deleted.</p>
-                <p class="body-text"><strong>The Solution (Bootstrapping):</strong> We use a remote origin (a private GitHub repository) as our permanent hard drive.</p>
-                <ul style="color: #cbd5e1; margin-left: 20px; margin-bottom: 0;">
-                    <li style="margin-bottom: 0.5rem;"><strong>On Server Boot:</strong> Before the server accepts any web requests, it runs `git clone https://github.com/your-repo.git` to download the entire database into memory.</li>
-                    <li><strong>On Every Edit:</strong> Every time the `GitManager` makes a `git commit`, it immediately follows it with `git push origin main`. This guarantees zero data loss if the server crashes a millisecond later.</li>
-                </ul>
+                <h3 style="color: var(--accent-4);">AI: Deterministic Gemini JSON</h3>
+                <p class="body-text">We do NOT rely on LLMs to calculate math (they are terrible at it). Gemini is strictly used as an NLP extraction tool. We use the `application/json` response schema to force Gemini to slice raw conversational text into strict JSON strings, making our pipeline 100% crash-proof.</p>
             </div>
-
-            <!-- TECH CARD 4: Deterministic AI -->
-            <div class="glass-card">
-                <h3 style="color: var(--accent-3);">Nuance 4: Deterministic AI (Gemini Structured Outputs)</h3>
-                <p class="body-text"><strong>The Problem:</strong> When calculating the forgetting curve, we need Gemini to return exactly `{"next_review_epoch": 1718841600}` so Elixir can save it. But LLMs are notorious for adding conversational garbage like <em>"Sure! Here is the JSON you requested: ```json ... ```"</em>. This will crash our backend JSON parser.</p>
-                <p class="body-text" style="margin-bottom:0;"><strong>The Solution:</strong> We must use the Gemini API's <span class="highlight">`response_mime_type: "application/json"`</span> parameter, combined with a strict `response_schema`. This forces Gemini at the API level to return raw, parsable JSON data without any markdown blocks or conversational text, guaranteeing a 100% stable pipeline.</p>
-            </div>
-        </section>
-
-
-        <!-- ==========================================
-             SECTION 4: TEAM CONTRIBUTION SPLIT
-             ========================================== -->
-        <section>
-            <h2>4. Suggested Contribution Split</h2>
-            <p class="body-text" style="margin-bottom: 2rem;">To move fast and avoid merge conflicts, work is split entirely by domain: External APIs vs Internal Engine.</p>
             
-            <div class="grid-2">
-                <!-- Person A Card -->
-                <div class="glass-card role-a">
-                    <h3 style="color: var(--accent-4);">Person A: External API Engineer</h3>
-                    <p class="body-text" style="font-size: 0.95rem;">You manage the boundaries of the system. You talk to Telegram and Gemini.</p>
-                    <ul style="color: #cbd5e1; margin-left: 20px; font-size: 0.95rem; line-height: 1.8;">
-                        <li><strong>Telegram Webhooks:</strong> Configure BotFather. Write the Elixir endpoint to receive incoming payloads from Telegram.</li>
-                        <li><strong>Gemini Integration:</strong> Craft the JSON Schema to force Gemini to return structured "Atomic Facts".</li>
-                        <li><strong>UI/UX Logic:</strong> Write the functions to send formatted Markdown messages back to Telegram with the inline callback buttons `[Forgot]`, `[Hard]`, `[Easy]`.</li>
-                        <li><em>Handoff:</em> You parse the Telegram message, get the JSON facts from Gemini, and pass that clean data to Person B's module.</li>
-                    </ul>
-                </div>
-
-                <!-- Person B Card -->
-                <div class="glass-card role-b">
-                    <h3 style="color: var(--accent-3);">Person B: Core Engine Engineer</h3>
-                    <p class="body-text" style="font-size: 0.95rem;">You manage the obscure internals. You build the Git DB and handle concurrency.</p>
-                    <ul style="color: #cbd5e1; margin-left: 20px; font-size: 0.95rem; line-height: 1.8;">
-                        <li><strong>The Git DB Module:</strong> Write the functions to take a Fact, format it into a Markdown string with YAML frontmatter, and save it to disk.</li>
-                        <li><strong>Concurrency (`GenServer`):</strong> Build the single-threaded `GitManager` that queues and executes the `git commit` commands sequentially.</li>
-                        <li><strong>The Query Engine:</strong> Write the Elixir logic to scan the Git directory, parse the YAML of all files, and filter out the ones due today.</li>
-                        <li><strong>Cron Infrastructure:</strong> Setup the Supabase `pg_cron` function to hit your internal Elixir endpoint daily.</li>
-                    </ul>
-                </div>
+            <div class="glass-card">
+                <h3 style="color: var(--accent-1);">Algorithm: Local SuperMemo-2</h3>
+                <p class="body-text">The mathematical forgetting curve is calculated entirely locally in Elixir via our custom `ReviewEngine`. By keeping the SM-2 math inside our backend rather than relying on external APIs, reviews resolve in under 50 milliseconds.</p>
             </div>
         </section>
 

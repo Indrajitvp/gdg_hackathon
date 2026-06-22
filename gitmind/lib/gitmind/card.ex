@@ -6,7 +6,8 @@ defmodule Gitmind.Card do
   @foreign_key_type :integer
   schema "cards" do
     belongs_to :user, Gitmind.User
-    field :fact, :string
+    field :front, :string
+    field :back, :string
     field :next_review_at, :utc_datetime
     field :interval, :integer, default: 1
     field :ease_factor, :float, default: 2.5
@@ -17,7 +18,7 @@ defmodule Gitmind.Card do
 
   def changeset(card, attrs) do
     card
-    |> cast(attrs, [:user_id, :fact, :next_review_at, :interval, :ease_factor, :repetitions])
-    |> validate_required([:user_id, :fact, :next_review_at])
+    |> cast(attrs, [:user_id, :front, :back, :next_review_at, :interval, :ease_factor, :repetitions])
+    |> validate_required([:user_id, :front, :back, :next_review_at])
   end
 end

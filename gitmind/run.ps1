@@ -1,12 +1,14 @@
 # Load .env file and export variables to the current process
-if (Test-Path .env) {
-    Get-Content .env | ForEach-Object {
+$env_path = Join-Path $PSScriptRoot "..\.env"
+if (Test-Path $env_path) {
+    Get-Content $env_path | ForEach-Object {
         $line = $_.Trim()
         # Skip empty lines and comments
         if ($line -and -not $line.StartsWith("#") -and $line.Contains("=")) {
             $key, $value = $line -split '=', 2
             if ($key -and $value) {
-                [System.Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim(), "Process")
+                $cleanValue = $value.Trim().Trim('"', "'")
+                [System.Environment]::SetEnvironmentVariable($key.Trim(), $cleanValue, "Process")
                 Write-Host "Loaded variable: $key"
             }
         }
@@ -17,6 +19,10 @@ if (Test-Path .env) {
 
 # Check if Mix/Elixir is available on the system PATH
 if (Get-Command mix -ErrorAction SilentlyContinue) {
+    Write-Host "Installing package managers..."
+    mix local.hex --force
+    mix local.rebar --force
+    
     Write-Host "Fetching dependencies..."
     mix deps.get
     
@@ -24,7 +30,7 @@ if (Get-Command mix -ErrorAction SilentlyContinue) {
     mix ecto.migrate
     
     Write-Host "Starting GitMind server..."
-    iex.bat -S mix
+    mix run --no-halt
 } else {
     Write-Warning "Elixir/Mix is not found on your system PATH."
     Write-Host "Environment variables have been exported. Please run the application in your Elixir-enabled environment."
